@@ -1,0 +1,18 @@
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Ambientes virtuais
+.venv/
+env/
+venv/
+ENV/
+
+# VS Code e IDEs
+.vscode/
+.idea/
+
+# Imagens de teste locais pesadas (opcional)
+*.avi
+*.mp4
