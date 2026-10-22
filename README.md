@@ -1,34 +1,50 @@
-# PDI Vision
+# PDI Vision Studio
 
-Ferramenta didática de processamento de imagens, inspirada no RoboRealm, feita para a
-disciplina de Processamento de Imagens Aplicado à Agroindústria. Cada operação aplicada
-gera um novo `Mat`, guardado em um **vetor de Mats** que funciona como histórico do
-processamento.
+Uma aplicação desktop interativa para **Processamento Digital de Imagens (PDI)** desenvolvida em **Python** e **PyQt6**, inspirada na arquitetura em pipeline modular do software *RoboRealm*.
 
-## Como executar
+---
 
-Requer Python 3.10 ou superior.
+## 🎯 Objetivo e Finalidade
 
-```bash
-pip install -r requirements.txt
-python main.py                    # ou: python main.py caminho/da/imagem.png
+O software foi concebido como projeto prático da disciplina de Processamento Digital de Imagens. Seu intuito principal é fornecer uma plataforma visual, não destrutiva e em tempo real para experimentação e encadeamento de algoritmos clássicos de visão computacional e PDI.
+
+Diferente de scripts sequenciais convencionais, a ferramenta adota o conceito de **Pipeline Reativo**:
+- A imagem de entrada é preservada de forma imutável na memória.
+- As transformações são empilhadas em uma lista de operações sequenciais.
+- O resultado de uma camada alimenta diretamente a camada subsequente.
+- Permite reordenar camadas, desabilitar/habilitar filtros temporariamente e ajustar parâmetros matemáticos via interface gráfica com retorno visual instantâneo.
+
+---
+
+## 🏗️ Arquitetura do Sistema
+
+O projeto foi estruturado seguindo o padrão arquitetural **MVC (Model-View-Controller)** com foco em Programação Orientada a Objetos (POO). O Model (`core/`) não depende da interface:
+
+```text
+projeto_pdi_vision/
+├── core/             # Model: vetor de Mats, Pipeline, classe base abstrata Operation e leitura/gravação de imagens
+├── operations/       # Implementações concretas dos algoritmos (OpenCV + NumPy), agrupadas pelo tema da aula
+├── ui/               # View & Controller: Interface gráfica modular em PyQt6
+├── main.py           # Ponto de entrada
+└── requirements.txt  # Dependências (NumPy, OpenCV, PyQt6)
 ```
 
-## Como usar
+### Vetor de Mats
 
-1. **Abra uma imagem** (Ctrl+O ou arrastando o arquivo para a janela). Ela vira o `Mat[0]`.
-2. **Adicione operações** com duplo clique no catálogo à esquerda. A nova etapa entra logo
-   depois do Mat selecionado e gera um novo Mat.
-3. **Selecione um Mat** no vetor (faixa inferior) para vê-lo e ajustar os parâmetros da etapa
-   que o gerou. O painel da direita mostra o código Python/OpenCV equivalente.
-4. **Entrada (src)**: por padrão a etapa lê o Mat anterior, mas pode ler qualquer `Mat[k]`.
-   Assim dá para reproduzir os exemplos da aula, como erosão e dilatação da mesma imagem
-   seguidas de `dilatação − erosão` (gradiente morfológico).
-5. **Comparar** (barra superior) mostra entrada × saída da etapa, ou original × Mat selecionado.
-   Passando o mouse sobre a imagem, a barra de status mostra os valores do pixel em cada canal.
-6. **Salvar Mat** (Ctrl+S) ou **Salvar todos** (Ctrl+Shift+S) grava os Mats como arquivos.
+Todo o histórico do processamento fica em um **vetor de Mats** (`core/mat_vector.py`), equivalente ao `vector<Mat>` do OpenCV em C++:
 
-## Requisitos do trabalho
+- `Mat[0]` é a imagem original (lida com `imread`).
+- `Mat[i]` é a saída da etapa *i* do pipeline (`core/pipeline.py`).
+- Por padrão a etapa *i* lê `Mat[i-1]`, mas pode ler qualquer `Mat[k]` anterior. Assim dá para reproduzir os exemplos da aula, como erosão e dilatação da mesma imagem seguidas de `dilatação − erosão` (gradiente morfológico).
+- Quando um parâmetro da etapa *k* muda, só `Mat[k..n]` são recalculados; os anteriores são reaproveitados.
+
+### Adicionando uma operação
+
+Basta herdar de `core.operation.Operation`, declarar os parâmetros em `params`, implementar `apply` (o processamento) e `code` (o código Python/OpenCV exibido na interface) e registrá-la em `operations/__init__.py`. A interface monta os controles sozinha.
+
+---
+
+## ✅ Requisitos do trabalho
 
 | Requisito | Onde está implementado |
 |---|---|
@@ -40,15 +56,22 @@ python main.py                    # ou: python main.py caminho/da/imagem.png
 | Morfologia matemática | `operations/morphology.py`: `erode`, `dilate`, `morphologyEx` (abertura, fechamento, gradiente, top-hat, black-hat) |
 | Extra | `operations/algebraic.py`: aritmética e lógica entre dois Mats do vetor |
 
-## Estrutura
+---
 
-```
-core/         vetor de Mats, base das operações e pipeline (não depende da interface)
-operations/   uma classe por operação, agrupadas pelo tema da aula
-ui/           interface PyQt6 (catálogo, visualizador, parâmetros, vetor de Mats)
-main.py       ponto de entrada
+## ▶️ Como executar
+
+Requer Python 3.10 ou superior.
+
+```bash
+pip install -r requirements.txt
+python main.py                    # ou: python main.py caminho/da/imagem.png
 ```
 
-Para criar uma operação, basta herdar de `core.operation.Operation`, declarar os parâmetros
-em `params`, implementar `apply` (o processamento) e `code` (o código exibido) e registrá-la
-em `operations/__init__.py`. A interface monta os controles sozinha.
+## 🧭 Como usar
+
+1. **Abra uma imagem** (Ctrl+O ou arrastando o arquivo para a janela). Ela vira o `Mat[0]`.
+2. **Adicione operações** com duplo clique no catálogo à esquerda. A nova etapa entra logo depois do Mat selecionado e gera um novo Mat.
+3. **Selecione um Mat** no vetor (faixa inferior) para vê-lo e ajustar os parâmetros da etapa que o gerou. O painel da direita mostra o código Python/OpenCV equivalente.
+4. **Entrada (src)**: escolha qual Mat do vetor a etapa lê (o anterior, por padrão).
+5. **Comparar** (barra superior) mostra entrada × saída da etapa, ou original × Mat selecionado. Passando o mouse sobre a imagem, a barra de status mostra os valores do pixel em cada canal.
+6. **Salvar Mat** (Ctrl+S) ou **Salvar todos** (Ctrl+Shift+S) grava os Mats como arquivos.
