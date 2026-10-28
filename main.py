@@ -2,17 +2,17 @@ import sys
 
 from PyQt6.QtWidgets import QApplication
 
-from ui.main_window import MainWindow
-from ui.theme import apply_theme
+from interface.janela_principal import JanelaPrincipal
+from interface.tema import aplicar_tema
 
 
 def main():
     app = QApplication(sys.argv)
-    apply_theme(app)
-    window = MainWindow()
-    if len(sys.argv) > 1:  # opcional: python main.py caminho/da/imagem.png
-        window.load_image(sys.argv[1])
-    window.show()
+    aplicar_tema(app)
+    janela = JanelaPrincipal()
+    if len(sys.argv) > 1:  # dá pra abrir já com uma imagem: python main.py imagem.png
+        janela.carregar_imagem(sys.argv[1])
+    janela.show()
     sys.exit(app.exec())
 
 

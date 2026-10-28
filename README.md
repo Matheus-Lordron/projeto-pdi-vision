@@ -18,29 +18,29 @@ Diferente de scripts sequenciais convencionais, a ferramenta adota o conceito de
 
 ## 🏗️ Arquitetura do Sistema
 
-O projeto foi estruturado seguindo o padrão arquitetural **MVC (Model-View-Controller)** com foco em Programação Orientada a Objetos (POO). O Model (`core/`) não depende da interface:
+O projeto foi estruturado seguindo o padrão arquitetural **MVC (Model-View-Controller)** com foco em Programação Orientada a Objetos (POO). O Model (`nucleo/`) não depende da interface:
 
 ```text
 projeto_pdi_vision/
-├── core/             # Model: vetor de Mats, Pipeline, classe base abstrata Operation e leitura/gravação de imagens
-├── operations/       # Implementações concretas dos algoritmos (OpenCV + NumPy), agrupadas pelo tema da aula
-├── ui/               # View & Controller: Interface gráfica modular em PyQt6
+├── nucleo/           # Model: vetor de Mats, Pipeline, classe base abstrata Operacao e leitura/gravação de imagens
+├── operacoes/        # Implementações concretas dos algoritmos (OpenCV + NumPy), agrupadas pelo tema da aula
+├── interface/        # View & Controller: Interface gráfica modular em PyQt6
 ├── main.py           # Ponto de entrada
 └── requirements.txt  # Dependências (NumPy, OpenCV, PyQt6)
 ```
 
 ### Vetor de Mats
 
-Todo o histórico do processamento fica em um **vetor de Mats** (`core/mat_vector.py`), equivalente ao `vector<Mat>` do OpenCV em C++:
+Todo o histórico do processamento fica em um **vetor de Mats** (`nucleo/vetor_mats.py`), equivalente ao `vector<Mat>` do OpenCV em C++:
 
 - `Mat[0]` é a imagem original (lida com `imread`).
-- `Mat[i]` é a saída da etapa *i* do pipeline (`core/pipeline.py`).
+- `Mat[i]` é a saída da etapa *i* do pipeline (`nucleo/pipeline.py`).
 - Por padrão a etapa *i* lê `Mat[i-1]`, mas pode ler qualquer `Mat[k]` anterior. Assim dá para reproduzir os exemplos da aula, como erosão e dilatação da mesma imagem seguidas de `dilatação − erosão` (gradiente morfológico).
 - Quando um parâmetro da etapa *k* muda, só `Mat[k..n]` são recalculados; os anteriores são reaproveitados.
 
 ### Adicionando uma operação
 
-Basta herdar de `core.operation.Operation`, declarar os parâmetros em `params`, implementar `apply` (o processamento) e `code` (o código Python/OpenCV exibido na interface) e registrá-la em `operations/__init__.py`. A interface monta os controles sozinha.
+Basta herdar de `nucleo.operacao.Operacao`, declarar os parâmetros em `parametros`, implementar `aplicar` (o processamento) e registrá-la em `operacoes/__init__.py`. A interface monta os controles sozinha.
 
 ---
 
@@ -48,13 +48,13 @@ Basta herdar de `core.operation.Operation`, declarar os parâmetros em `params`,
 
 | Requisito | Onde está implementado |
 |---|---|
-| Vetor de Mats | `core/mat_vector.py` (`MatVector`) e `core/pipeline.py` (`Pipeline`) |
-| Conversão de cor | `operations/color.py`: `cvtColor` (GRAY, HSV, HLS, Lab, Luv, XYZ, YCrCb), `split`/`merge`, fórmulas de cinza |
-| Filtro (suavização/realce) | `operations/smoothing.py`: `blur`, `GaussianBlur`, `medianBlur`, `bilateralFilter`; `operations/enhancement.py`: brilho/contraste, negativo, alargamento de contraste, `equalizeHist` |
-| Detector de borda | `operations/edges.py`: `Sobel`, `Laplacian`, `Canny`, Prewitt, Roberts, Kirsch e máscaras passa-alta (`filter2D`) |
-| Binarização | `operations/threshold.py`: `threshold` (incl. Otsu e Triângulo), `adaptiveThreshold`, `inRange` |
-| Morfologia matemática | `operations/morphology.py`: `erode`, `dilate`, `morphologyEx` (abertura, fechamento, gradiente, top-hat, black-hat) |
-| Extra | `operations/algebraic.py`: aritmética e lógica entre dois Mats do vetor |
+| Vetor de Mats | `nucleo/vetor_mats.py` (`VetorMats`) e `nucleo/pipeline.py` (`Pipeline`) |
+| Conversão de cor | `operacoes/cor.py`: `cvtColor` (GRAY, HSV, HLS, Lab, Luv, XYZ, YCrCb), `split`/`merge`, fórmulas de cinza |
+| Filtro (suavização/realce) | `operacoes/suavizacao.py`: `blur`, `GaussianBlur`, `medianBlur`, `bilateralFilter`; `operacoes/realce.py`: brilho/contraste, negativo, alargamento de contraste, `equalizeHist` |
+| Detector de borda | `operacoes/bordas.py`: `Sobel`, `Laplacian`, `Canny`, Prewitt, Roberts, Kirsch e máscaras passa-alta (`filter2D`) |
+| Binarização | `operacoes/limiarizacao.py`: `threshold` (incl. Otsu e Triângulo), `adaptiveThreshold`, `inRange` |
+| Morfologia matemática | `operacoes/morfologia.py`: `erode`, `dilate`, `morphologyEx` (abertura, fechamento, gradiente, top-hat, black-hat) |
+| Extra | `operacoes/entre_mats.py`: aritmética e lógica entre dois Mats do vetor |
 
 ---
 
@@ -71,7 +71,7 @@ python main.py                    # ou: python main.py caminho/da/imagem.png
 
 1. **Abra uma imagem** (Ctrl+O ou arrastando o arquivo para a janela). Ela vira o `Mat[0]`.
 2. **Adicione operações** com duplo clique no catálogo à esquerda. A nova etapa entra logo depois do Mat selecionado e gera um novo Mat.
-3. **Selecione um Mat** no vetor (faixa inferior) para vê-lo e ajustar os parâmetros da etapa que o gerou. O painel da direita mostra o código Python/OpenCV equivalente.
+3. **Selecione um Mat** no vetor (faixa inferior) para vê-lo e ajustar os parâmetros da etapa que o gerou. Na equalização, o painel também mostra o histograma antes e depois.
 4. **Entrada (src)**: escolha qual Mat do vetor a etapa lê (o anterior, por padrão).
 5. **Comparar** (barra superior) mostra entrada × saída da etapa, ou original × Mat selecionado. Passando o mouse sobre a imagem, a barra de status mostra os valores do pixel em cada canal.
 6. **Salvar Mat** (Ctrl+S) ou **Salvar todos** (Ctrl+Shift+S) grava os Mats como arquivos.
